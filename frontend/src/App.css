@@ -1,0 +1,6 @@
+.cards{
+  margin-top: 8vh;
+  display: flex;
+  flex-wrap: wrap;
+}
+
