@@ -3,6 +3,7 @@ import {useNavigate } from 'react-router-dom'
 import { PRODUCTS } from "../../products";
 import { ShopContext } from "../../context/show-context";
 import "./cart.css";
+// import axios from "axios";
 
 export const Cart = () => {
   const { cartItems , addToCart, removeFromCart } = useContext(ShopContext);
@@ -17,7 +18,15 @@ export const Cart = () => {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate('/pay' , {state : {totalPrice: totalPrice}});
+    // axios.post("http://localhost:5000/api/data", { totalPrice: totalPrice })
+    // .then((response) => {
+    //   console.log(response);
+    //   // navigate('/pay', { state: { totalPrice: totalPrice } });
+    // })
+    // .catch((error) => {
+    //   console.log(error);
+    // });
+    navigate('/pay', { state: { totalPrice: totalPrice } });
   };
 
 

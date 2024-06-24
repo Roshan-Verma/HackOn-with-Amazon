@@ -1,10 +1,10 @@
 import React from 'react'
-import Navbar from './Navbar'
 import drop from '../assets/drop.svg';
 import { useState , useContext} from 'react';
 import { PRODUCTS } from '../products';
-import { useLocation } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { ShopContext } from '../context/show-context';
+import { useNavigate } from 'react-router-dom';
 
 const Payment = () => {
 
@@ -15,7 +15,7 @@ const Payment = () => {
     const [netBanking, setnetBanking] = useState(false)
     const [EMI, setEMI] = useState(false)
 
-    const [paymentMethod, setPaymentMethod] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState('UPI');
     const { cartItems , addToCart, removeFromCart } = useContext(ShopContext);
 
     const location = useLocation();
@@ -82,18 +82,22 @@ const Payment = () => {
         setdebitShow(false);
     }
 
+    const navigate = useNavigate();
+        const handleCheckout = () =>{
+            alert("Transaction Succesfull! You will be redirected to Home Page")
+            navigate('/');
+    }
+
   return (
     <div className='flex'>
         <div className="left w-[60%] m-4 p-6 flex flex-col gap-6">
             <div className='border flex justify-between items-center p-2 rounded-md h-16 border-black bg-black text-white'>
-                <h2 className='text-2xl'>Preferred Payment Method : </h2>
-                <button className='text-[18px] bg-[#ff9900] p-1 rounded-md'>Pay Now</button>
+                <h2 className='text-2xl'>Preferred Payment Method : {paymentMethod}</h2>
             </div>
             
                 <div className="methods flex flex-col gap-4 ">
 
                     <div className='border min-h-[40px] flex flex-col gap-2 p-2 rounded-md bg-gray-400  border-black'>
-
                     
                         <div className="flex justify-between ">
                             
@@ -245,7 +249,7 @@ const Payment = () => {
             </div>
 
             <div className='flex justify-center bg-[#ff9900] p-2 rounded-md'>
-                <button className="">CheckOut</button>
+                <button className="" onClick={handleCheckout}>CheckOut</button>
             </div>
 
         </div>

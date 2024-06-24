@@ -2,9 +2,15 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import amazonLogo from '../assets/amazon-logo.png';
 import cartIcon from '../assets/cart.png';
+import { useNavigate } from 'react-router-dom';
 import './Navbar.css';
 
 const navbar = () => {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate('/Budget');
+ };
   return (
     <div className = "w-full flex justify-between items-center bg-black py-3 px-1">
 
@@ -20,11 +26,15 @@ const navbar = () => {
 
       <div className = 'flex gap-5'>
         <div className='flex gap-4'>
+          {/* <Link to='/Budget'> */}
+          <button onClick={handleClick} className='w-18 text-sm h-10 p-1 md:p-2 rounded-md bg-[#ff9900]' id = "">Budget</button>
+          {/* </Link> */}
           <Link to='/dashboard'>
             <button className='w-18 text-sm h-10 p-1 md:p-2 rounded-md bg-[#ff9900]' id = "navbar-dashboard-btn">Dashboard</button>
           </Link>
-            
+            <a href="https://d4a25caaaf8c3e4c52.gradio.live">
             <button className='p-1 md:p-2 rounded-md bg-[#ff9900]' id = "navbar-chatbot-btn">Chatbot</button>
+            </a>
         </div>
 
           <Link to="/cart">
