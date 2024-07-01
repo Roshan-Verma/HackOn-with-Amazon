@@ -1,0 +1,44 @@
+.calendar {
+    max-width: 400px;
+    margin: auto;
+    text-align: center;
+    background-color: #f2f2f2;
+  }
+  
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  
+  .weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    margin-bottom: 5px;
+  }
+  
+  .days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+  }
+  
+  .day, .empty {
+    padding: 10px;
+    border: 1px solid #ccc;
+  }
+  
+  .empty {
+    background-color: #f9f9f9;
+  }
+
+  .btn {
+    padding: 10px 30px;
+    background: #232f3e;
+    color: white;
+    border-radius: 6px;
+  }
+  .current-day {
+    background-color: orange;
+    color: white;
+  }

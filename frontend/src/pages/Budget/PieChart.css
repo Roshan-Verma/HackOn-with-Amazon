@@ -1,0 +1,37 @@
+/* PieChart.css */
+
+.pie-chart-container {
+    width: 300px; /* Adjust width as needed */
+    height: 300px; /* Adjust height as needed */
+    margin: auto; /* Center align the chart */
+  }
+  
+  /* Adjust colors to match Amazon's color theme */
+  .doughnut-legend ul {
+    list-style-type: none;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .doughnut-legend ul li {
+    display: inline-block;
+    margin-right: 10px;
+  }
+  
+  .doughnut-legend ul li span {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin-right: 5px;
+    border-radius: 2px;
+  }
+  
+  .doughnut-legend ul li:first-child span {
+    background-color: rgba(255, 99, 132, 0.2);
+  }
+  
+  .doughnut-legend ul li:last-child span {
+    background-color: rgba(54, 162, 235, 0.2);
+  }
+  

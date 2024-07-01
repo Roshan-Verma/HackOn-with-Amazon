@@ -32,7 +32,7 @@ const navbar = () => {
           <Link to='/dashboard'>
             <button className='w-18 text-sm h-10 p-1 md:p-2 rounded-md bg-[#ff9900]' id = "navbar-dashboard-btn">Dashboard</button>
           </Link>
-            <a href="https://d4a25caaaf8c3e4c52.gradio.live">
+            <a href="https://029e1983bcbb1cdec5.gradio.live">
             <button className='p-1 md:p-2 rounded-md bg-[#ff9900]' id = "navbar-chatbot-btn">Chatbot</button>
             </a>
         </div>

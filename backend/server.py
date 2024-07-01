@@ -6,17 +6,75 @@ from sklearn.preprocessing import LabelEncoder
 import pandas as pd
 import numpy as np
 import mysql.connector
-import os
+import os   
 import datetime
+from email.message import EmailMessage
+import ssl
+import smtplib
+
+x = datetime.datetime.now()
 
 app = Flask(__name__)
+cors = CORS(app)
 
+__amt = None
 __transactionsdf=None
 __offersdf=None
 __pmdf=None
 __model1=None
 __model2=None
 __le=None
+
+PRODUCTS = [
+    {
+        'id': 1,
+        'name': 'Travel BagPack',
+        'price': 59,
+        'category': 'Luggage'
+    },
+    {
+        'id': 2,
+        'name': 'Apple AirPods',
+        'price': 299,
+        'category': 'Electronics'
+    },
+    {
+        'id': 3,
+        'name': 'iPhone 15 Pro Max',
+        'price': 1499,
+        'category': 'Electronics'
+    },
+    {
+        'id': 4,
+        'name': 'MacBook M1 Air',
+        'price': 1099,
+        'category': 'Electronics'
+    },
+    {
+        'id': 5,
+        'name': 'Microwave Oven',
+        'price': 299,
+        'category': 'Electronics'
+    },
+    {
+        'id': 6,
+        'name': 'Sony PlayStation 5',
+        'price': 599,
+        'category': 'Electronics'
+    },
+    {
+        'id': 7,
+        'name': 'Nike Shoes',
+        'price': 199,
+        'category': 'Fashion'
+    },
+    {
+        'id': 8,
+        'name': 'Watch',
+        'price': 399,
+        'category': 'Fashion'
+    }
+]
 
 
 def load_model():
@@ -130,7 +188,6 @@ def load_model():
     __model2 = RandomForestClassifier(n_estimators=100,   random_state=42)
     __model2.fit(X_train, y_train)
 
-
 def get_frequently_used_payment_method(user_id, transaction_df):
     user_transactions = transaction_df[transaction_df['user_id'] == user_id]
     user_transactions=user_transactions.sort_values(by=list(user_transactions.columns), ascending=[False] * len(user_transactions.columns))
@@ -138,8 +195,6 @@ def get_frequently_used_payment_method(user_id, transaction_df):
         return user_transactions['frequently_used_payment_method'].mode()[0]
     else:
         return None
-    
-amt = 0
 
 def prediction_fun(transaction):
     
@@ -210,28 +265,223 @@ def prediction_fun(transaction):
 
     return final_method
 
-@app.route('/predict', methods=['GET','POST'])
+def send_email_notifications(notifications):
+    email_sender = 'amazonhackon@gmail.com'
+    email_receiver = 'hackonamazon04@gmail.com'
+    email_password = 'uejlfbjqsukjwvij'
+    subject = 'Budget Notification'
+    body = "\n".join(notifications)
+
+    em = EmailMessage()
+    em['From'] = email_sender
+    em['To'] = email_receiver
+    em['Subject'] = subject
+    em.set_content(body)
+
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as smtp:
+        smtp.login(email_sender, email_password)
+        smtp.sendmail(email_sender, email_receiver, em.as_string())
+
+# Function to check budget limit
+def check_budget_limit(user_id):
+    mydb = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="password",
+        database="hackonamazon"
+    )
+    mycursor = mydb.cursor()
+
+    mycursor.execute("SELECT amount, spend_amount FROM budget WHERE user_id = %s", (user_id,))
+    budget_info = mycursor.fetchone()
+
+    if budget_info:
+        amount = budget_info[0]
+        spend_amount = budget_info[1]
+
+        if amount > 0:
+            spend_percent = (spend_amount / amount) * 100
+
+            notifications = []
+
+            if spend_percent >= 100:
+                notifications.append("100% of the budget limit has been used. No remaining budget.")
+            if spend_percent < 100 and spend_percent > 90:
+                notifications.append(f"90% of the budget limit has been used. Remaining budget: ${amount - spend_amount:.2f}")
+            if spend_amount < 90 and spend_percent > 50:
+                notifications.append(f"50% of the budget limit has been used. Remaining budget: ${amount - spend_amount:.2f}")
+
+            if notifications:
+                send_email_notifications(notifications)
+
+    mycursor.close()
+    mydb.close()
+
+# Route to accept the total amount in the cart
+@app.route('/api/data', methods=["POST","GET"])
+def get_data():
+    if( request.method == 'POST'):
+        data = request.get_json()
+        price = request.json['totalPrice']
+        global __amt
+        __amt = price
+        return jsonify({'message' : 'data recieved'})
+    else:
+        return jsonify({'message' : 'data not recieved'})
+
+#Route to send Payment Method Recommendation
+@app.route('/predict', methods=['POST','GET'])
 def predict_payment_method():
     today = datetime.date.today()
     transaction = {
-        'user_id': 1,
-        'transaction_amount': amt,
+        'user_id': 4,
+        'transaction_amount': __amt,
         'date': today.strftime("%Y-%m-%d"),
         'success/failure': 'success'
     }
     recommended_method = prediction_fun(transaction)
     return jsonify({'recommended_payment_method': recommended_method})
 
-@app.route('/api/data', methods=["POST","GET"])
-def get_data():
-	if( request.method == 'POST'):
-		amt = request.json['totalPrice']
-		# print(amt)
-		return jsonify({'message' : 'Data recieved'})
-	else:
-		return jsonify({'message' : 'Data Not recieved'})
-	
+# Route to fetch budget limit
+@app.route('/getBudgetLimit', methods=['POST'])
+def get_budget_limit():
+    if request.method == 'POST':
+        data = request.get_json()
+        user_id = data.get('user_id')
 
-# Running app
+        mydb = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="password",
+            database="hackonamazon"
+        )
+        
+        mycursor = mydb.cursor()
+        mycursor.execute("SELECT amount, spend_amount FROM budget WHERE user_id = %s", (user_id,))
+        budget_info = mycursor.fetchone()
+
+        mycursor.close()
+        mydb.close()
+
+        if budget_info:
+            budget_limit = budget_info[0]
+            spend_amount = budget_info[1]
+            return jsonify({'budget_limit': budget_limit, 'spend_amount': spend_amount})
+        else:
+            return jsonify({'error': 'Budget limit not found'})
+    else:
+        return jsonify({'error': 'Method not allowed'})
+
+#Route to set/update budget limit
+@app.route('/budgetLimit', methods=['POST'])
+def setBudgetLimit():
+    if request.method == 'POST':
+        mydb = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="password",
+            database="hackonamazon"
+        )
+        data = request.get_json()
+        user_id = data.get('user_id')
+        amount = data.get('amount')
+        valid_till = data.get('valid_till')
+
+        mycursor = mydb.cursor()
+        mycursor.execute("SELECT * FROM budget WHERE user_id = %s", (user_id,))
+        existing_budget = mycursor.fetchone()
+
+        if existing_budget:
+            mycursor.execute("UPDATE budget SET amount = %s, valid_till = %s WHERE user_id = %s",
+                             (amount, valid_till, user_id))
+        else:
+            mycursor.execute("INSERT INTO budget (user_id, amount, valid_till) VALUES (%s, %s, %s)",
+                             (user_id, amount, valid_till))
+
+        mydb.commit()
+        mycursor.close()
+
+        return jsonify({'message': 'success'})
+
+@app.route('/resetBudget', methods=['POST'])
+def reset_budget():
+    if request.method == 'POST':
+        data = request.get_json()
+        user_id = data.get('user_id')
+
+        mydb = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="password",
+            database="hackonamazon"
+        )
+        
+        mycursor = mydb.cursor()
+        mycursor.execute("DELETE FROM budget WHERE user_id = %s", (user_id,))
+        mydb.commit()
+
+        mycursor.close()
+        mydb.close()
+
+        return jsonify({'message': 'success'})
+
+@app.route('/checkout', methods = ['POST','GET'])
+def checkout():
+    if request.method == 'POST':
+        items = request.json['cartItems']
+        paymentMethod = request.json['paymentMethod']
+        print(items)
+        # print(request)
+        print(paymentMethod)
+
+        mydb=mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="password",
+            database="hackonamazon",
+        )
+
+        mycursor=mydb.cursor()
+        mycursor.execute("SELECT MAX(`Order ID`) FROM orders")
+        myresult = mycursor.fetchone()
+        last_order_id = myresult[0]
+        mydb.close()
+
+        mydb=mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="password",
+            database="hackonamazon",
+        )
+
+        mycursor=mydb.cursor()
+        totalAmt = 0
+        for i in range(1,9):
+            if items[str(i)] == 0:
+                continue
+            current_date = datetime.datetime.now()
+            formatted_date = str(current_date.strftime("%Y-%m-%d %H:%M:%S"))
+            
+            sql = "INSERT INTO orders VALUES (%s, %s, %s, %s, %s, %s, NULL, %s, NULL, NULL)"
+            values = (str(last_order_id+1), PRODUCTS[i-1]['name'], PRODUCTS[i-1]['category'], formatted_date, str(PRODUCTS[i-1]['price']*items[str(i)]), str(items[str(i)]), str(10))
+            totalAmt += PRODUCTS[i-1]['price']*items[str(i)]
+            for i in values:
+                print(i)
+            mycursor.execute(sql,values)
+            mydb.commit()
+            last_order_id += 1
+        current_date = datetime.datetime.now()
+        formatted_date = str(current_date.strftime("%Y-%m-%d"))
+        mycursor.execute("UPDATE Budget SET spend_amount = spend_amount + %s WHERE user_id = 1 AND valid_till >= %s",(totalAmt,formatted_date))
+        mydb.commit()
+        check_budget_limit(1)
+        mydb.close()
+        
+        return jsonify({'message' : 'checkout successful'})
+    else:
+        return jsonify({'message' : 'data not recieved'})
+
+
 if __name__ == '__main__':
 	app.run(host = '0.0.0.0',debug=True)

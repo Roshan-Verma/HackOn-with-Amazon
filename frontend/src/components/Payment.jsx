@@ -1,13 +1,13 @@
 import React from 'react'
 import drop from '../assets/drop.svg';
-import { useState , useContext} from 'react';
+import { useState , useContext, useEffect } from 'react';
 import { PRODUCTS } from '../products';
 import { Navigate, useLocation } from 'react-router-dom';
 import { ShopContext } from '../context/show-context';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Payment = () => {
-
     const [debitShow, setdebitShow] = useState(false)
     const [UPI, setUPI] = useState(false)
     const [Credit, setCredit] = useState(false)
@@ -15,12 +15,24 @@ const Payment = () => {
     const [netBanking, setnetBanking] = useState(false)
     const [EMI, setEMI] = useState(false)
 
-    const [paymentMethod, setPaymentMethod] = useState('UPI');
-    const { cartItems , addToCart, removeFromCart } = useContext(ShopContext);
+    const [paymentMethod, setPaymentMethod] = useState('None');
+    const [recommmendedPaymentMethod, setPayment] = useState('None');
+    const { cartItems , addToCart, removeFromCart, setCartItems, clear } = useContext(ShopContext);
 
     const location = useLocation();
 
     const totalPrice = location.state.totalPrice;
+
+    useEffect(() => {
+        axios.get("http://localhost:5000/predict")
+        .then((response) => {
+            setPayment(response.data['recommended_payment_method']);
+            console.log(response);
+        })
+        .catch((error) => {
+            console.log(error);
+        });
+    },[]);
 
     const handledebit = () =>{
         setPaymentMethod('Debit Card');
@@ -82,17 +94,42 @@ const Payment = () => {
         setdebitShow(false);
     }
 
+    const getDefaultCart = () => {
+        let cart = {};
+        for (let i = 1; i < PRODUCTS.length + 1; i++) {
+          cart[i] = 0;
+        }
+        return cart;
+      };
+
+      useEffect(() => {
+        console.log('After clearing:', cartItems);
+      }, [cartItems]);
+
     const navigate = useNavigate();
-        const handleCheckout = () =>{
+    const handleCheckout = () =>{
+        if( paymentMethod == 'None' ){
+            alert('Please select a payment method');
+            return;
+        }
+        axios.post("http://localhost:5000/checkout", { cartItems, paymentMethod })
+        .then((response) => {
+            console.log(response); 
+            setCartItems(getDefaultCart());
             alert("Transaction Succesfull! You will be redirected to Home Page")
             navigate('/');
+        })
+        .catch((error) => {
+            console.log(error);
+            alert("Transaction Failed!")
+        });
     }
 
   return (
     <div className='flex'>
         <div className="left w-[60%] m-4 p-6 flex flex-col gap-6">
             <div className='border flex justify-between items-center p-2 rounded-md h-16 border-black bg-black text-white'>
-                <h2 className='text-2xl'>Preferred Payment Method : {paymentMethod}</h2>
+                <h2 className='text-2xl'>Preferred Payment Method : {recommmendedPaymentMethod}</h2>
             </div>
             
                 <div className="methods flex flex-col gap-4 ">
@@ -207,8 +244,6 @@ const Payment = () => {
                           
                         <div className={COD ? "flex flex-col items-end gap-1" : 'hidden'} >
                             <button className='p-2 rounded-md bg-[#ff9900]'>Click Here</button>
-                            {/* <button>Click Here<button/> */}
-                           
                         </div>
 
 
@@ -248,9 +283,7 @@ const Payment = () => {
 
             </div>
 
-            <div className='flex justify-center bg-[#ff9900] p-2 rounded-md'>
-                <button className="" onClick={handleCheckout}>CheckOut</button>
-            </div>
+            <button className='flex justify-center bg-[#ff9900] p-2 rounded-md' onClick={handleCheckout}>CheckOut</button>
 
         </div>
 

@@ -3,7 +3,7 @@ import {useNavigate } from 'react-router-dom'
 import { PRODUCTS } from "../../products";
 import { ShopContext } from "../../context/show-context";
 import "./cart.css";
-// import axios from "axios";
+import axios from "axios";
 
 export const Cart = () => {
   const { cartItems , addToCart, removeFromCart } = useContext(ShopContext);
@@ -15,20 +15,7 @@ export const Cart = () => {
     addToCart(product_id);
   }
 
-  const navigate = useNavigate();
-
-  const handleClick = () => {
-    // axios.post("http://localhost:5000/api/data", { totalPrice: totalPrice })
-    // .then((response) => {
-    //   console.log(response);
-    //   // navigate('/pay', { state: { totalPrice: totalPrice } });
-    // })
-    // .catch((error) => {
-    //   console.log(error);
-    // });
-    navigate('/pay', { state: { totalPrice: totalPrice } });
-  };
-
+  const navigate = useNavigate();  
 
   const [totalPrice, setTotalPrice] = useState(0);
 
@@ -40,7 +27,20 @@ export const Cart = () => {
     setTotalPrice(newTotalPrice);
   }, [cartItems]);
 
- 
+  const handleClick2 = () => {
+    if (totalPrice == 0 ){
+      alert("Please add products to your cart!")
+      return
+    }
+    axios.post("http://localhost:5000/api/data", { 'totalPrice' : totalPrice })
+    .then((response) => {
+      console.log(response);
+      navigate('/pay', { state: { totalPrice: totalPrice } });
+    })
+    .catch((error) => {
+      console.log(error);
+    });
+  };
 
   return (
     <div className="cart">
@@ -86,7 +86,7 @@ export const Cart = () => {
 
           </div>
           <div className="">
-            <button onClick={handleClick} className="w-full bg-[#ff9900] rounded-md h-9 text-lg">
+            <button onClick={handleClick2} className="w-full bg-[#ff9900] rounded-md h-9 text-lg">
               Proceed to Checkout
             </button>
           </div>
