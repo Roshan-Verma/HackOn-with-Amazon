@@ -268,7 +268,7 @@ def prediction_fun(transaction):
 def send_email_notifications(notifications):
     email_sender = 'amazonhackon@gmail.com'
     email_receiver = 'hackonamazon04@gmail.com'
-    email_password = 'uejlfbjqsukjwvij'
+    email_password = 'samplepassword' # Add password here
     subject = 'Budget Notification'
     body = "\n".join(notifications)
 
